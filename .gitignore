@@ -11,3 +11,4 @@
 /SpectraLogger/GPS-Testing/Drive acq/*
 MANIFEST
 /UniversalArchiveInterface.egg-info
+/MANIFEST.in
