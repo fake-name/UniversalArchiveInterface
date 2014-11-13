@@ -72,7 +72,7 @@ creation: `rarfile` returns both files and directories when used as an
 iterable, while `zipfile` does not. The `rarfile` library also returns paths
 with double-back-slashes (`\\`) instead of single forward slashes (`/`) for
 path separators, though it accepts and works fine with forward-slash delimiters.
-Therefore, the iterator internally replaces all double-backslashs in `rarfile`
+Therefore, the iterator internally replaces all double-backslashes in `rarfile`
 internal paths with forward-slashes.
 
 

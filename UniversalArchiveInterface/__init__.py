@@ -159,21 +159,25 @@ class ArchiveReader(object):
 	# Open internal path `internalPath`, return a file-like object.
 	@logErrors
 	def open(self, internalPath):
-		if self.archType != '7z':
-			return self.archHandle.open(internalPath)
-		else:
+		if self.archType == '7z':
 			return self.archHandle.getmember(internalPath)
+		else:
+			return self.archHandle.open(internalPath)
 
 	# Return the file contents of item at path `internalPath` as a
 	# Binary string.
 	@logErrors
 	def read(self, internalPath):
-		if self.archType != '7z':
-			return self.archHandle.read(internalPath)
-		else:
-			with self.archHandle.getmember(internalPath) as fp:
-				content = fp.read()
+		if self.archType == '7z':
+			fp = self.archHandle.getmember(internalPath)
+			content = fp.read()
+
+			# It returns a file-like object, but it doesn't' have a
+			# close() method. Wat?
+			del fp
 			return content
+		else:
+			return self.archHandle.read(internalPath)
 
 
 	@logErrors
