@@ -21,12 +21,18 @@ This was an outgrowth of my [MangaCMS](https://github.com/fake-name/MangaCMS/)
 project, that I decided was sufficently generally useful on it's own
 to warrant separate packaging.
 
+Additional dependencies:  
+`python-magic` - For determining file-types.
 
 
 API
 ---
 
 Currently, the API is very simple, and only supports reading archive contents:
+This will *probably* not change, due to the legal difficulties involved in 
+modifying `*.rar` files (the `.rar` file format is proprietary, and anything
+other then decompressing them arguably requires a WinRar license. The 
+decompression code has been freely released.).
 
 ```
 >>> import UniversalArchiveInterface as uar
@@ -53,14 +59,27 @@ The `ArchiveReader` class supports only a few methods:
 The `ArchiveReader` class is also iterable:
 
 ```
-for fileName, fileContents in arch:
-    print("filename '%s', filesize %s" % (fileName, len(fileContents)))
+for fileName, fileHandle in arch:
+    print("filename '%s', filesize %s" % (fileName, len(fileHandle.read())))
 
 ```
 
 Lastly, there is also a `arch.close()` method, for manually closing and freeing
 the open file-handles, though the destructor generally can handle this
 automatically.
+
+
+The `ArchiveReader` class also provides two `staticMethods`: 
+
+ - `ArchiveReader.isArchive(filepath):` 
+ - `ArchiveReader.bufferIsArchive(buffer):`
+
+Both return `True` if the passed path/buffer-contents is an archive the 
+library can handle, and false otherwise. 
+
+File type identification is via the `python-magic` library, which does not care
+about file-extension.
+
 
 ---
 
@@ -75,6 +94,14 @@ path separators, though it accepts and works fine with forward-slash delimiters.
 Therefore, the iterator internally replaces all double-backslashes in `rarfile`
 internal paths with forward-slashes.
 
+
+TODO:
+Better test coverage. Right now, it's about 60% covered.
+Most of the not-covered parts are the rar handling (I can't create test-rars easily:
+rar is a proprietary format, and 7zip can't create them), and exception handling.
+Almost all exeptions are caught, logged, and re-raised internally, but that
+is currently not tested. I need to corrupt some archives and write tests around
+those corruped archives.
 
 License:
 BSD

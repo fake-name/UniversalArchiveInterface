@@ -6,8 +6,11 @@ import unittest
 import UniversalArchiveInterface as uai
 
 
-TEST_PATH_ZIP = './Tests/testfiles/test_good.zip'
-TEST_PATH_7Z  = './Tests/testfiles/test_good.7z'
+TEST_PATH_ZIP       = './Tests/testfiles/test_good.zip'
+TEST_PATH_7Z        = './Tests/testfiles/test_good.7z'
+
+TEST_PATH_BAD_ZIP   = './Tests/testfiles/test_bad.zip'
+TEST_PATH_BAD_7Z    = './Tests/testfiles/test_bad.7z'
 
 
 class TestDecompression(unittest.TestCase):
@@ -59,3 +62,24 @@ class TestDecompression(unittest.TestCase):
 		self.verify_archive(arch)
 
 		arch.close()
+
+
+	# Verify the corrupt archives are really corrupt
+	def test_bad_zip_fpath(self):
+		fpath = TEST_PATH_BAD_ZIP
+		self.assertRaises(ValueError, uai.ArchiveReader, archPath=fpath)
+
+	def test_bad_zip_fcont(self):
+		with open(TEST_PATH_BAD_ZIP, "rb") as fp:
+			zcont = fp.read()
+		self.assertRaises(ValueError, uai.ArchiveReader, fileContents=zcont)
+
+	def test_bad_7z_fpath(self):
+		fpath = TEST_PATH_BAD_7Z
+		self.assertRaises(ValueError, uai.ArchiveReader, archPath=fpath)
+
+	def test_bad_7z_fcont(self):
+		with open(TEST_PATH_BAD_7Z, "rb") as fp:
+			zcont = fp.read()
+		self.assertRaises(ValueError, uai.ArchiveReader, fileContents=zcont)
+
