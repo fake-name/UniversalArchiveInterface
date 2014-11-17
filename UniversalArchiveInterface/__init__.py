@@ -220,11 +220,17 @@ class ArchiveReader(object):
 
 	def _getZipFileList(self):
 		names = self.archHandle.namelist()
-		ret = []
+
+		# Sometimes, the namelist *somehow* returns the same file
+		# TWICE. No idea what the fuck is going on, it led to some
+		# VERY confusing bugs. Anyways, use a set to prevent dupes.
+		ret = set()
 		for name in names:
 			if not name.endswith("/"):
-				ret.append(name)
+				ret.add(name)
 
+		ret = list(ret)
+		ret.sort()
 		return ret
 
 	def _getRarFileList(self):
