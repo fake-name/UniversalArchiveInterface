@@ -3,7 +3,8 @@ python:
     - "3.4"
 # command to install dependencies
 install:
-    - "pip install git+https://github.com/fancycode/pylzma"
-    - "pip install ."
+    - "pip3 install git+https://github.com/fancycode/pylzma"
+    - "pip3 install coverage"
+    - "pip3 install ."
 # command to run tests
 script: python3 $(which nosetests) -s --with-coverage --exe --cover-package=UniversalArchiveInterface
