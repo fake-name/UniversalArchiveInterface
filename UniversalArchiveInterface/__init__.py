@@ -32,7 +32,7 @@ def logErrors(func):
 				self.logger.error("%s", tbLine)
 			raise
 
-		except (rarfile.PasswordRequired, RuntimeError):
+		except rarfile.PasswordRequired:
 			self.logger.error("Archive password protected: ")
 			self.logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):

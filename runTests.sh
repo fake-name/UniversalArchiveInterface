@@ -23,6 +23,10 @@
 # python3 $(which nosetests) --exe --with-coverage --cover-package=dbApi --cover-package=dbPhashApi Tests
 
 
-python3 $(which nosetests) -s --with-coverage --exe --cover-package=UniversalArchiveInterface
+python3 $(which nosetests) --with-coverage --exe --cover-package=UniversalArchiveInterface
+coverage report --show-missing
+coverage erase
+
+python2 $(which nosetests) --with-coverage --exe --cover-package=UniversalArchiveInterface
 coverage report --show-missing
 coverage erase

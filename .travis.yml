@@ -1,10 +1,11 @@
 language: python
 python:
     - "3.4"
+    - "2.7"
 # command to install dependencies
 install:
-    - "pip3 install git+https://github.com/fancycode/pylzma"
+    - "pip3 install pylzma"
     - "pip3 install coverage"
     - "pip3 install ."
 # command to run tests
-script: python3 $(which nosetests) -s --with-coverage --exe --cover-package=UniversalArchiveInterface
+script: python3 $(which nosetests) --with-coverage --exe --cover-package=UniversalArchiveInterface
