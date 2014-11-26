@@ -105,7 +105,7 @@ class ArchiveReader(object):
 
 				self.archType = "7z"  # py7zlib.Archive7z mimics the interface of zipfile.ZipFile, so we'll use the zipfile.ZipFile codepaths
 
-			except zipfile.BadZipfile:
+			except py7zlib.ArchiveError:
 				print("Invalid zip file!")
 				traceback.print_exc()
 				raise ValueError
