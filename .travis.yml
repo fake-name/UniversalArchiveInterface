@@ -2,10 +2,17 @@ language: python
 python:
     - "3.4"
     - "2.7"
+
 # command to install dependencies
 install:
-    - "pip3 install pylzma"
-    - "pip3 install coverage"
-    - "pip3 install ."
+    - "sudo apt-get install unrar -y"
+    - "pip install nose"
+    - "pip install coverage"
+    - "pip install coveralls"
+    - "pip install git+https://github.com/ahupp/python-magic"
+    - "pip install ."
 # command to run tests
-script: python3 $(which nosetests) --with-coverage --exe --cover-package=UniversalArchiveInterface
+script: python $(which nosetests) --with-coverage --exe --cover-package=UniversalArchiveInterface
+
+after_success:
+    - coveralls

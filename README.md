@@ -1,4 +1,4 @@
-UniversalArchiveInterface  [![Build Status](https://travis-ci.org/fake-name/UniversalArchiveInterface.svg?branch=master)](https://travis-ci.org/fake-name/UniversalArchiveInterface)
+UniversalArchiveInterface  [![Build Status](https://travis-ci.org/fake-name/UniversalArchiveInterface.svg?branch=master)](https://travis-ci.org/fake-name/UniversalArchiveInterface)[![Coverage Status](https://img.shields.io/coveralls/fake-name/UniversalArchiveInterface.svg)](https://coveralls.io/r/fake-name/UniversalArchiveInterface)
 =========================
 
 API wrapper to allow seamless opening of many different compressed archive file
