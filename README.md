@@ -6,14 +6,16 @@ types from python with a consistent API.
 
 Tested on python 2.7 and Python 3.4.
 
-Python has libraries for a wide variety of archives:
+Python has libraries for a wide variety of archives:  
+
  - `*.zip` via `zipfile` (prepacked with python)
  - `*.rar` via `rarfile`
  - `*.7z` via `pylzma`
 
 All of these libraries support a "zipfile like" interface. However, **none**
-of them have a "zipfile *compatible*" interface. They all have just enough
-bizarre quirks that code that is written for one will not work with another.
+of them have a "zipfile *compatible*" interface (well, excepting `zipfile` 
+itself). They all have just enough bizarre quirks that code that is written for 
+one will not work with another.
 
 This library is intended to wrap all of these libraries, and present a
 completely consistent interface, so the higher-level code does not have to care
@@ -82,6 +84,23 @@ library can handle, and false otherwise.
 File type identification is via the `python-magic` library, which does not care
 about file-extension.
 
+### Exceptions
+
+All archive-format-specific exceptions are caught, and re-raised as generic
+exceptions. UniveralArchiveInterface defines three exceptions:
+
+ - `ArchiveError` - Base exception
+	 - `CorruptArchive` - Archive is corrupt
+	 - `NotAnArchive` - Passed file is not an archive.
+
+`ArchiveError` is the parent-exception of `CorruptArchive` and `NotAnArchive`. 
+`NotAnArchive` is raised when an archiveReader is instantiated on a file or 
+buffer that is not actually an archive. `CorruptArchive` is raised when an 
+archiveReader is instantiated on or access a corrupt archive.
+
+Note that `CorruptArchive` can potentially be raised in multiple circumstances: 
+when the archiveReader is instantiated, when the file-listing is generated, or 
+when a file is actually accessed. 
 
 ---
 
@@ -101,7 +120,7 @@ TODO:
 Better test coverage. Right now, it's about 60% covered.
 Most of the not-covered parts are the rar handling (I can't create test-rars easily:
 rar is a proprietary format, and 7zip can't create them), and exception handling.
-Almost all exeptions are caught, a logging message is emitted, and then the
+Almost all exceptions are caught, a logging message is emitted, and then the
 exception is re-raised as a single exception type (generally `ValueError`), but
 this is currently not well-tested. I need to corrupt some archives and write tests around
 those corruped archives.
