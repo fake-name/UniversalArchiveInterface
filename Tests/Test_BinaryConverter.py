@@ -1,6 +1,16 @@
 
 import unittest
 
+import logging
+
+# ch = logging.StreamHandler()
+# ch.setLevel(logging.DEBUG)
+
+# formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+# ch.setFormatter(formatter)
+
+# logger = logging.getLogger('Main')
+# logger.addHandler(ch)
 
 
 import UniversalArchiveInterface as uai
@@ -8,9 +18,13 @@ import UniversalArchiveInterface as uai
 
 TEST_PATH_ZIP       = './Tests/testfiles/test_good.zip'
 TEST_PATH_7Z        = './Tests/testfiles/test_good.7z'
+TEST_PATH_RAR       = './Tests/testfiles/test_good.rar'
 
 TEST_PATH_BAD_ZIP   = './Tests/testfiles/test_bad.zip'
 TEST_PATH_BAD_7Z    = './Tests/testfiles/test_bad.7z'
+TEST_PATH_BAD_RAR   = './Tests/testfiles/test_bad.rar'
+
+TEST_NOT_AN_ARCH    = './Tests/testfiles/test.txt'
 
 
 class TestDecompression(unittest.TestCase):
@@ -63,23 +77,106 @@ class TestDecompression(unittest.TestCase):
 
 		arch.close()
 
+	def test_rar_fpath(self):
+		fpath = TEST_PATH_RAR
+		arch = uai.ArchiveReader(archPath=fpath)
+		self.verify_archive(arch)
 
-	# Verify the corrupt archives are really corrupt
+		arch.close()
+
+	def test_rar_fcont(self):
+		with open(TEST_PATH_RAR, "rb") as fp:
+			zcont = fp.read()
+
+		arch = uai.ArchiveReader(fileContents=zcont)
+		self.verify_archive(arch)
+
+		arch.close()
+
+
+	# Verify the corrupt archives are really corrupt,
+	# and we're failing in the correct place (by looking at the raised
+	# error message)
 	def test_bad_zip_fpath(self):
 		fpath = TEST_PATH_BAD_ZIP
-		self.assertRaises(ValueError, uai.ArchiveReader, archPath=fpath)
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			uai.ArchiveReader(archPath=fpath)
+		self.assertEqual('File is not a valid zip archive!',
+							str(cm.exception)
+						)
 
 	def test_bad_zip_fcont(self):
 		with open(TEST_PATH_BAD_ZIP, "rb") as fp:
 			zcont = fp.read()
-		self.assertRaises(ValueError, uai.ArchiveReader, fileContents=zcont)
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			uai.ArchiveReader(fileContents=zcont)
+		self.assertEqual('File is not a valid zip archive!',
+							str(cm.exception)
+						)
 
 	def test_bad_7z_fpath(self):
 		fpath = TEST_PATH_BAD_7Z
-		self.assertRaises(ValueError, uai.ArchiveReader, archPath=fpath)
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			uai.ArchiveReader(archPath=fpath)
+		self.assertEqual('File is not a valid 7z archive!',
+							str(cm.exception)
+						)
 
 	def test_bad_7z_fcont(self):
 		with open(TEST_PATH_BAD_7Z, "rb") as fp:
 			zcont = fp.read()
-		self.assertRaises(ValueError, uai.ArchiveReader, fileContents=zcont)
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			uai.ArchiveReader(fileContents=zcont)
+		self.assertEqual('File is not a valid 7z archive!',
+							str(cm.exception)
+						)
+
+	def test_bad_rar_fpath(self):
+		fpath = TEST_PATH_BAD_RAR
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			reader = uai.ArchiveReader(archPath=fpath)
+			for dummy_1, dummy_2 in reader:
+				pass
+		self.assertEqual('Corrupt Rar archive!',
+							str(cm.exception)
+						)
+
+	def test_bad_rar_fcont(self):
+		with open(TEST_PATH_BAD_RAR, "rb") as fp:
+			zcont = fp.read()
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			reader = uai.ArchiveReader(fileContents=zcont)
+			for dummy_1, dummy_2 in reader:
+				pass
+		self.assertEqual('Corrupt Rar archive!',
+							str(cm.exception)
+						)
+
+
+
+	def test_not_an_archive_fpath(self):
+		fpath = TEST_NOT_AN_ARCH
+
+		with self.assertRaises(uai.NotAnArchive) as cm:
+			uai.ArchiveReader(archPath=fpath)
+		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain'",
+							str(cm.exception)
+						)
+
+	def test_not_an_archive_fcont(self):
+		with open(TEST_NOT_AN_ARCH, "rb") as fp:
+			zcont = fp.read()
+
+		with self.assertRaises(uai.NotAnArchive) as cm:
+			uai.ArchiveReader(fileContents=zcont)
+		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain'",
+							str(cm.exception)
+						)
+
 

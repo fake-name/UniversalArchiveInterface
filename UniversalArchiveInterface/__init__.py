@@ -6,6 +6,7 @@ import zlib
 
 import zipfile
 import rarfile
+import tempfile
 import io
 
 import logging
@@ -13,7 +14,16 @@ import traceback
 import py7zlib
 import contextlib
 
+class ArchiveError(Exception):
+	pass
 
+class CorruptArchive(ArchiveError):
+	pass
+
+class NotAnArchive(ArchiveError):
+	pass
+logPath = "Main.ArchTool"
+logger = logging.getLogger(logPath)
 
 # Decorator that catches errors, does some logging, and then re-raises the error.
 def logErrors(func):
@@ -22,39 +32,45 @@ def logErrors(func):
 			return func(self, *args, **kwargs)
 
 		except TypeError:
-			self.logger.error("Empty Archive Directory? Path = %s", self.archPath)
+			logger.error("Empty Archive Directory? Path = %s", self.archPath)
 			raise
 
-		except (rarfile.BadRarFile, zipfile.BadZipfile):
-			self.logger.error("CORRUPT ARCHIVE: ")
-			self.logger.error("%s", self.archPath)
+		except CorruptArchive:
+			logger.error("Corrupt Archive: ")
+			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
-				self.logger.error("%s", tbLine)
+				logger.error("%s", tbLine)
+			raise
+		except NotAnArchive:
+			logger.error("File is not an archive: ")
+			logger.error("%s", self.archPath)
+			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
+				logger.error("%s", tbLine)
 			raise
 
 		except rarfile.PasswordRequired:
-			self.logger.error("Archive password protected: ")
-			self.logger.error("%s", self.archPath)
+			logger.error("Archive password protected: ")
+			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
-				self.logger.error("%s", tbLine)
+				logger.error("%s", tbLine)
 			raise
 
 
 		except zlib.error:
-			self.logger.error("Archive password protected: ")
-			self.logger.error("%s", self.archPath)
+			logger.error("Archive password protected: ")
+			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
-				self.logger.error("%s", tbLine)
+				logger.error("%s", tbLine)
 			raise
 
 		except (KeyboardInterrupt, SystemExit, GeneratorExit):
 			raise
 
 		except:
-			self.logger.error("Unknown error in archive iterator: ")
-			self.logger.error("%s", self.archPath)
+			logger.error("Unknown error in archive iterator: ")
+			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
-				self.logger.error("%s", tbLine)
+				logger.error("%s", tbLine)
 			raise
 	return caughtFunc
 
@@ -63,26 +79,34 @@ class ArchiveReader(object):
 
 	fp = None
 
-	def __init__(self, archPath=None, fileContents=None, logPath=None):
-		if not logPath:
-			logPath = "Main.ArchTool"
-		self.logger = logging.getLogger(logPath)
+	@logErrors
+	def __init__(self, archPath=None, fileContents=None):
+
 		self.archPath = archPath
+
+		self.tempfile = None
 
 		if archPath:
 			self.fType = magic.from_file(archPath, mime=True).decode("ascii")
 		elif fileContents:
 			self.fType = magic.from_buffer(fileContents, mime=True).decode("ascii")
 		else:
-			raise ValueError("You must pass either an archive file path or the contents of an archive to the!")
+			raise ValueError("You must pass either an archive file path or the contents of an\
+				archive to the constructor!")
 
-		#print "wholepath - ", wholePath
 		if self.fType == 'application/x-rar':
-			#print "Rar File"
+			if fileContents:
+				# Because rar is a shitty proprietary compression format,
+				# it can't be used in normal libraries, and the legal
+				# libraries only operate on real files. Therefore,
+				# create a temp-file.
+				self.tempfile = tempfile.NamedTemporaryFile()
+				self.tempfile.write(fileContents)
+				self.tempfile.flush()
+				self.archPath = self.tempfile.name
 			self.archHandle = rarfile.RarFile(self.archPath) # self._iterRarFiles()
 			self.archType = "rar"
 		elif self.fType == 'application/zip':
-			#print "Zip File"
 			try:
 				if fileContents:  # Use pre-read fileContents whenever possible.
 					self.archHandle = zipfile.ZipFile(io.BytesIO(fileContents))
@@ -91,11 +115,9 @@ class ArchiveReader(object):
 
 				self.archType = "zip"
 			except zipfile.BadZipfile:
-				print("Invalid zip file!")
-				traceback.print_exc()
-				raise ValueError
+				raise CorruptArchive("File is not a valid zip archive!")
+
 		elif self.fType == 'application/x-7z-compressed':
-			#print "Zip File"
 			try:
 				if fileContents:  # Use pre-read fileContents whenever possible.
 					self.archHandle = py7zlib.Archive7z(io.BytesIO(fileContents))
@@ -103,22 +125,23 @@ class ArchiveReader(object):
 					self.fp = open(archPath, "rb")
 					self.archHandle = py7zlib.Archive7z(self.fp) # self._iterZipFiles()
 
-				self.archType = "7z"  # py7zlib.Archive7z mimics the interface of zipfile.ZipFile, so we'll use the zipfile.ZipFile codepaths
+				self.archType = "7z"
 
 			except py7zlib.ArchiveError:
-				print("Invalid zip file!")
-				traceback.print_exc()
-				raise ValueError
+				raise CorruptArchive("File is not a valid 7z archive!")
 		else:
-			print("Returned MIME Type for file = ", self.fType )
-			raise ValueError("Tried to create ArchiveReader on a non-archive file")
+			raise NotAnArchive("Tried to create ArchiveReader on a non-archive file! File type: '%s'" % self.fType)
 
-	# something somewhere isn't closing properly, making shit leak all over the place (I think?)
-	# Probably the shitty 7z library again (SO MANY ISSUES)
 	def __del__(self):
+		# If we had to create a temp-file, close it, so it'll be deleted.
+		if self.tempfile:
+			self.tempfile.close()
+
+		# something somewhere isn't closing properly, making shit leak all over the place (I think?)
+		# Anyways, try to close all the things manually
 		try:
 			self.close()
-		except:
+		except Exception:
 			pass
 
 	@staticmethod
@@ -179,8 +202,6 @@ class ArchiveReader(object):
 		else:
 			return self.archHandle.read(internalPath)
 
-
-	@logErrors
 	def __iter__(self):
 		if self.archType == "rar":
 			for item in self._iterRarFiles():
@@ -194,30 +215,39 @@ class ArchiveReader(object):
 		else:
 			raise ValueError("Not a known archive type. Wat")
 
-
-
+	@logErrors
 	def _iter7zFiles(self):
 		names = self._get7zFileList()
 		for name in names:
 			tempFp = self.archHandle.getmember(name)
 			yield name, tempFp
 
+	@logErrors
 	def _iterZipFiles(self):
 		names = self._getZipFileList()
 		for name in names:
 			with self.archHandle.open(name) as tempFp:
 				yield name, tempFp
 
-
-
+	# Exceptions here aren't being caught in the `@logErrors` decorator properly
+	# Not sure why, yet.
+	@logErrors
 	def _iterRarFiles(self):
 		names = self._getRarFileList()
 		for name in names:
-			with self.archHandle.open(name) as tempFp:
-				name = name.replace("\\", "/")
-				yield name, tempFp
+			try:
+				with self.archHandle.open(name) as tempFp:
+					name = name.replace("\\", "/")
 
+					# Because rarfile does no checking until we
+					# actually read the file, read the file into
+					# a temporary buffer, and yield that
+					tempFp = io.BytesIO(tempFp.read())
+					yield name, tempFp
+			except rarfile.BadRarFile:
+				raise CorruptArchive("Corrupt Rar archive!")
 
+	@logErrors
 	def _getZipFileList(self):
 		names = self.archHandle.namelist()
 
@@ -233,6 +263,7 @@ class ArchiveReader(object):
 		ret.sort()
 		return ret
 
+	@logErrors
 	def _getRarFileList(self):
 		names = self.archHandle.namelist()
 		ret = []
@@ -242,7 +273,7 @@ class ArchiveReader(object):
 
 		return ret
 
-
+	@logErrors
 	def _get7zFileList(self):
 		names = self.archHandle.getnames()
 		return names

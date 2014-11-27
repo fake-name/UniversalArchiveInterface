@@ -4,6 +4,8 @@ UniversalArchiveInterface  [![Build Status](https://travis-ci.org/fake-name/Univ
 API wrapper to allow seamless opening of many different compressed archive file
 types from python with a consistent API.
 
+Tested on python 2.7 and Python 3.4.
+
 Python has libraries for a wide variety of archives:
  - `*.zip` via `zipfile` (prepacked with python)
  - `*.rar` via `rarfile`
@@ -21,7 +23,7 @@ This was an outgrowth of my [MangaCMS](https://github.com/fake-name/MangaCMS/)
 project, that I decided was sufficently generally useful on it's own
 to warrant separate packaging.
 
-Additional dependencies:  
+Additional dependencies:
 `python-magic` - For determining file-types.
 
 
@@ -29,9 +31,9 @@ API
 ---
 
 Currently, the API is very simple, and only supports reading archive contents:
-This will *probably* not change, due to the legal difficulties involved in 
+This will *probably* not change, due to the legal difficulties involved in
 modifying `*.rar` files (the `.rar` file format is proprietary, and anything
-other then decompressing them arguably requires a WinRar license. The 
+other then decompressing them arguably requires a WinRar license. The
 decompression code has been freely released.).
 
 ```
@@ -69,13 +71,13 @@ the open file-handles, though the destructor generally can handle this
 automatically.
 
 
-The `ArchiveReader` class also provides two `staticMethods`: 
+The `ArchiveReader` class also provides two `staticMethods`:
 
- - `ArchiveReader.isArchive(filepath):` 
+ - `ArchiveReader.isArchive(filepath):`
  - `ArchiveReader.bufferIsArchive(buffer):`
 
-Both return `True` if the passed path/buffer-contents is an archive the 
-library can handle, and false otherwise. 
+Both return `True` if the passed path/buffer-contents is an archive the
+library can handle, and false otherwise.
 
 File type identification is via the `python-magic` library, which does not care
 about file-extension.
@@ -99,8 +101,9 @@ TODO:
 Better test coverage. Right now, it's about 60% covered.
 Most of the not-covered parts are the rar handling (I can't create test-rars easily:
 rar is a proprietary format, and 7zip can't create them), and exception handling.
-Almost all exeptions are caught, logged, and re-raised internally, but that
-is currently not tested. I need to corrupt some archives and write tests around
+Almost all exeptions are caught, a logging message is emitted, and then the
+exception is re-raised as a single exception type (generally `ValueError`), but
+this is currently not well-tested. I need to corrupt some archives and write tests around
 those corruped archives.
 
 License:
