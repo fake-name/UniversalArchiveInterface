@@ -22,6 +22,11 @@ class CorruptArchive(ArchiveError):
 
 class NotAnArchive(ArchiveError):
 	pass
+
+class PasswordRequired(ArchiveError):
+	pass
+
+
 logPath = "Main.ArchTool"
 logger = logging.getLogger(logPath)
 
@@ -53,7 +58,7 @@ def logErrors(func):
 			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
 				logger.error("%s", tbLine)
-			raise
+			raise PasswordRequired("Archive is password protected.")
 
 
 		except zlib.error:
@@ -61,7 +66,7 @@ def logErrors(func):
 			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
 				logger.error("%s", tbLine)
-			raise
+			raise PasswordRequired("Archive is password protected.")
 
 		except (KeyboardInterrupt, SystemExit, GeneratorExit):
 			raise
@@ -71,7 +76,7 @@ def logErrors(func):
 			logger.error("%s", self.archPath)
 			for tbLine in traceback.format_exc().rstrip().lstrip().split("\n"):
 				logger.error("%s", tbLine)
-			raise
+			raise ArchiveError("Unknown archive errlr?")
 	return caughtFunc
 
 
@@ -86,12 +91,12 @@ class ArchiveReader(object):
 
 		self.tempfile = None
 
-		if archPath:
-			self.fType = magic.from_file(archPath, mime=True).decode("ascii")
-		elif fileContents:
+		if fileContents:
 			self.fType = magic.from_buffer(fileContents, mime=True).decode("ascii")
+		elif archPath:
+			self.fType = magic.from_file(archPath, mime=True).decode("ascii")
 		else:
-			raise ValueError("You must pass either an archive file path or the contents of an\
+			raise NotAnArchive("You must pass either an archive file path or the contents of an\
 				archive to the constructor!")
 
 		if self.fType == 'application/x-rar':
@@ -166,8 +171,6 @@ class ArchiveReader(object):
 		elif self.archType == "7z":
 			for item in self._get7zFileList():
 				yield item
-		else:
-			raise ValueError("Not a known archive type. Wat")
 
 
 	# Close an open archive.
@@ -212,8 +215,6 @@ class ArchiveReader(object):
 		elif self.archType == "7z":
 			for item in self._iter7zFiles():
 				yield item
-		else:
-			raise ValueError("Not a known archive type. Wat")
 
 	@logErrors
 	def _iter7zFiles(self):

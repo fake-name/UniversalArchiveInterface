@@ -180,3 +180,34 @@ class TestDecompression(unittest.TestCase):
 						)
 
 
+	def test_is_archive(self):
+
+		self.assertEqual(uai.ArchiveReader.isArchive(TEST_PATH_RAR), True)
+		self.assertEqual(uai.ArchiveReader.isArchive(TEST_PATH_ZIP), True)
+		self.assertEqual(uai.ArchiveReader.isArchive(TEST_PATH_7Z), True)
+
+		with open(TEST_PATH_RAR, "rb") as fp:
+			rcont = fp.read()
+		with open(TEST_PATH_ZIP, "rb") as fp:
+			zcont = fp.read()
+		with open(TEST_PATH_7Z, "rb") as fp:
+			scont = fp.read()
+
+		self.assertEqual(uai.ArchiveReader.bufferIsArchive(rcont), True)
+		self.assertEqual(uai.ArchiveReader.bufferIsArchive(zcont), True)
+		self.assertEqual(uai.ArchiveReader.bufferIsArchive(scont), True)
+
+	def test_is_not_archive(self):
+		self.assertEqual(uai.ArchiveReader.isArchive(TEST_NOT_AN_ARCH), False)
+
+		with open(TEST_NOT_AN_ARCH, "rb") as fp:
+			ncont = fp.read()
+
+		self.assertEqual(uai.ArchiveReader.bufferIsArchive(ncont), False)
+
+
+	def test_no_archive(self):
+
+		with self.assertRaises(uai.CorruptArchive) as cm:
+			reader = uai.NotAnArchive()
+
