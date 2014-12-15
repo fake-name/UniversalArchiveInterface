@@ -208,6 +208,6 @@ class TestDecompression(unittest.TestCase):
 
 	def test_no_archive(self):
 
-		with self.assertRaises(uai.CorruptArchive) as cm:
-			reader = uai.NotAnArchive()
+		with self.assertRaises(uai.NotAnArchive) as cm:
+			reader = uai.ArchiveReader()
 
