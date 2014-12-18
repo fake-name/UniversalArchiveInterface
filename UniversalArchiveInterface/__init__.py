@@ -163,15 +163,15 @@ class ArchiveReader(object):
 	@logErrors
 	def getFileList(self):
 		if self.archType == "rar":
-			for item in self._getRarFileList():
-				yield item
+			fList = self._getRarFileList()
 		elif self.archType == "zip":
-			for item in self._getZipFileList():
-				yield item
+			fList = self._getZipFileList()
 		elif self.archType == "7z":
-			for item in self._get7zFileList():
-				yield item
+			fList = self._get7zFileList()
 
+		fList.sort()
+		for fName in fList:
+			yield fName
 
 	# Close an open archive.
 	def close(self):
