@@ -248,7 +248,7 @@ class ArchiveReader(object):
 			except rarfile.BadRarFile:
 				raise CorruptArchive("Corrupt Rar archive!")
 
-	@logErrors
+
 	def _getZipFileList(self):
 		names = self.archHandle.namelist()
 
@@ -264,7 +264,7 @@ class ArchiveReader(object):
 		ret.sort()
 		return ret
 
-	@logErrors
+
 	def _getRarFileList(self):
 		names = self.archHandle.namelist()
 		ret = []
@@ -274,8 +274,47 @@ class ArchiveReader(object):
 
 		return ret
 
-	@logErrors
 	def _get7zFileList(self):
 		names = self.archHandle.getnames()
 		return names
+
+
+	@logErrors
+	def verify(self):
+		'''
+		Check the integrity of the archive. Returns `True` if the archive
+		is valid, `False` if it fails verification.
+		'''
+		if self.archType == "rar":
+			return self._verifyRarFiles()
+		elif self.archType == "zip":
+			return self._verifyZipFiles()
+		elif self.archType == "7z":
+			return self._verify7zFiles()
+
+	def _verifyZipFiles(self):
+		ret = self.archHandle.testzip()
+		if ret == None:
+			return True
+		return False
+
+	def _verifyRarFiles(self):
+		# *Sigh*. Rarfile.testrar() raises an
+		# error on a corrupt file, rather then properly matching
+		# zipfile, and returning the name of the first invalid file.
+		# Seriously, who implemented this crap?
+		try:
+			self.archHandle.testrar()
+		except rarfile.RarCRCError:
+			return False
+		return True
+
+	def _verify7zFiles(self):
+		for dummy_fname, fp in self._iter7zFiles():
+			try:
+				fp.checkcrc()
+			except ValueError:
+				return False
+		return True
+
 
