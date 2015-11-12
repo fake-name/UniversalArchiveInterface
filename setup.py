@@ -7,7 +7,7 @@ setup(
 	name="UniversalArchiveInterface",
 
 	# Version number (initial):
-	version="0.0.1",
+	version="0.0.3",
 
 	# Application author details:
 	author="Connor Wolf	",
