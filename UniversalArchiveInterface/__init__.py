@@ -92,12 +92,15 @@ class ArchiveReader(object):
 		self.tempfile = None
 
 		if fileContents:
-			self.fType = magic.from_buffer(fileContents, mime=True).decode("ascii")
+			self.fType = magic.from_buffer(fileContents, mime=True)
+			if not isinstance(self.fType, str):
+				self.fType.decode("ascii")
 		elif archPath:
-			self.fType = magic.from_file(archPath, mime=True).decode("ascii")
+			self.fType = magic.from_file(archPath, mime=True)
+			if not isinstance(self.fType, str):
+				self.fType.decode("ascii")
 		else:
-			raise NotAnArchive("You must pass either an archive file path or the contents of an\
-				archive to the constructor!")
+			raise NotAnArchive("You must pass either an archive file path or the contents of an archive to the constructor!")
 
 		if self.fType == 'application/x-rar':
 			if fileContents:
@@ -151,12 +154,18 @@ class ArchiveReader(object):
 
 	@staticmethod
 	def isArchive(filepath):
-		fType = magic.from_file(filepath, mime=True).decode("ascii")
+		fType = magic.from_file(filepath, mime=True)
+		if not isinstance(fType, str):
+			fType.decode("ascii")
+
 		return fType in ['application/x-rar', 'application/zip', 'application/x-7z-compressed']
 
 	@staticmethod
 	def bufferIsArchive(buffer):
-		fType = magic.from_buffer(buffer, mime=True).decode("ascii")
+		fType = magic.from_buffer(buffer, mime=True)
+		if not isinstance(fType, str):
+			fType.decode("ascii")
+
 		return fType in ['application/x-rar', 'application/zip', 'application/x-7z-compressed']
 
 
