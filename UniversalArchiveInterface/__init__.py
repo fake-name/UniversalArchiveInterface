@@ -92,10 +92,12 @@ class ArchiveReader(object):
 		self.tempfile = None
 
 		if fileContents:
+			self.fTypePlain = magic.from_buffer(fileContents)
 			self.fType = magic.from_buffer(fileContents, mime=True)
 			if not isinstance(self.fType, str):
 				self.fType.decode("ascii")
 		elif archPath:
+			self.fTypePlain = magic.from_file(archPath)
 			self.fType = magic.from_file(archPath, mime=True)
 			if not isinstance(self.fType, str):
 				self.fType.decode("ascii")
@@ -137,8 +139,18 @@ class ArchiveReader(object):
 
 			except py7zlib.ArchiveError:
 				raise CorruptArchive("File is not a valid 7z archive!")
+		elif self.fType == "application/octet-stream" and self.fTypePlain == "Zip archive data":
+			try:
+				if fileContents:  # Use pre-read fileContents whenever possible.
+					self.archHandle = zipfile.ZipFile(io.BytesIO(fileContents))
+				else:
+					self.archHandle = zipfile.ZipFile(self.archPath) # self._iterZipFiles()
+
+				self.archType = "zip"
+			except zipfile.BadZipfile:
+				raise CorruptArchive("File is not a valid zip archive!")
 		else:
-			raise NotAnArchive("Tried to create ArchiveReader on a non-archive file! File type: '%s'" % self.fType)
+			raise NotAnArchive("Tried to create ArchiveReader on a non-archive file! File type: '%s' (%s)" % (self.fType, self.fTypePlain))
 
 	def __del__(self):
 		# If we had to create a temp-file, close it, so it'll be deleted.
