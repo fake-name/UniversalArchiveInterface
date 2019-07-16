@@ -165,7 +165,7 @@ class TestDecompression(unittest.TestCase):
 
 		with self.assertRaises(uai.NotAnArchive) as cm:
 			uai.ArchiveReader(archPath=fpath)
-		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain'",
+		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain' (ASCII text, with no line terminators)",
 							str(cm.exception)
 						)
 
@@ -175,7 +175,7 @@ class TestDecompression(unittest.TestCase):
 
 		with self.assertRaises(uai.NotAnArchive) as cm:
 			uai.ArchiveReader(fileContents=zcont)
-		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain'",
+		self.assertEqual("Tried to create ArchiveReader on a non-archive file! File type: 'text/plain' (ASCII text, with no line terminators)",
 							str(cm.exception)
 						)
 
